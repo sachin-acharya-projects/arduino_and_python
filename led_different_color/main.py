@@ -1,13 +1,21 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QColorDialog
+from serial.tools.list_ports import comports
 import serial
 
 class Ui_Dialog(object):
-    def setupUi(self, Dialog):
+    def setupUi(self, Dialog: QColorDialog):
         try:
             self.serial_com = serial.Serial("COM4", 115200)
+        except serial.SerialException:
+            print("Choose PORT from following list")
+            for port in comports():
+                print(f"""    {port}""")
+            self.serial_com = serial.Serial("COM"+input("\nEnter PORT, COM"), 115200)
         except Exception as e:
             print(e.__class__.__name__, str(e))
+        else:
+            print("Graphic Windows is started")
         
         Dialog.setObjectName("Dialog")
         Dialog.resize(493, 275)
@@ -74,12 +82,12 @@ class Ui_Dialog(object):
         color = QColorDialog.getColor()
         try:
             color_code = color.getRgb()
-            self.serial_com.write(str(color_code[0]).encode('utf-8'))
-            self.serial_com.write(str(color_code[1]).encode('utf-8'))
-            self.serial_com.write(str(color_code[2]).encode('utf-8'))
-            # print(",".join(color_code))
+            color_cords = str(" ".join(map(lambda a: str(a).zfill(3), color_code[:3])))
+            self.serial_com.write(color_cords.encode('utf-8'))
+            print("Sent To -> ", color_cords)
+            print("Received By -> ", self.serial_com.readline().decode().strip())
         except Exception as e:
-            print(e.__class__.__name__, str(e))
+            print("CodeError", e.__class__.__name__, str(e))
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate # 204 222 192
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
